@@ -98,10 +98,17 @@ def snail_step(uid, col, row, target, obs, config):
 SCOUT_TRANSFER_ENERGY = 75
 
 
-def factory_action(uid, col, row, energy, jump_cd, build_cd, scout_count, obs, config):
-    if scout_count == 0 and build_cd == 0 and energy >= config.scoutCost:
-        return "BUILD_SCOUT"
-    return factory_bug_north(col, row, jump_cd, obs, config)
+def factory_action(uid, col, row, energy, jump_cd, build_cd, scout_count, worker_count, obs, config):
+    # Jump immediately if north is blocked — don't sidestep
+    if not has_road(obs, config, col, row, "NORTH"):
+        return "JUMP_NORTH"
+    # Build support units when idle
+    if build_cd == 0:
+        if worker_count == 0 and energy >= config.workerCost:
+            return "BUILD_WORKER"
+        if scout_count == 0 and energy >= config.scoutCost:
+            return "BUILD_SCOUT"
+    return "NORTH"
 
 
 def scout_action(uid, col, row, energy, factory_pos, obs, config):
@@ -128,6 +135,7 @@ def agent(obs, config):
     robots = my_robots(obs)
     _, f_data = my_factory(obs)
     scout_count = sum(1 for d in robots.values() if d[0] == 1)
+    worker_count = sum(1 for d in robots.values() if d[0] == 2)
 
     for uid, data in robots.items():
         rtype, col, row, energy = data[0], data[1], data[2], data[3]
@@ -135,7 +143,7 @@ def agent(obs, config):
         build_cd = data[7] if len(data) > 7 else 0
 
         if rtype == 0:
-            actions[uid] = factory_action(uid, col, row, energy, jump_cd, build_cd, scout_count, obs, config)
+            actions[uid] = factory_action(uid, col, row, energy, jump_cd, build_cd, scout_count, worker_count, obs, config)
         elif rtype == 1 and f_data is not None:
             factory_pos = (f_data[1], f_data[2])
             actions[uid] = scout_action(uid, col, row, energy, factory_pos, obs, config)
