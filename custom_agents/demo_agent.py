@@ -10,7 +10,7 @@ Strategy:
 DIRS = {"NORTH": (0, 1), "SOUTH": (0, -1), "EAST": (1, 0), "WEST": (-1, 0)}
 WALL_BIT = {"NORTH": 1, "EAST": 2, "SOUTH": 4, "WEST": 8}
 
-
+print("v1.1")
 # --- Helpers -----------------------------------------------------------------
 
 def wall_at(obs, config, col, row):
@@ -111,6 +111,18 @@ def factory_action(uid, col, row, energy, jump_cd, build_cd, scout_count, worker
     return "NORTH"
 
 
+def worker_action(col, row, energy, obs, config):
+    if not has_road(obs, config, col, row, "NORTH") and energy >= config.wallRemoveCost:
+        return "REMOVE_NORTH"
+    if has_road(obs, config, col, row, "NORTH"):
+        return "NORTH"
+    if has_road(obs, config, col, row, "EAST"):
+        return "EAST"
+    if has_road(obs, config, col, row, "WEST"):
+        return "WEST"
+    return "IDLE"
+
+
 def scout_action(uid, col, row, energy, factory_pos, obs, config):
     fc, fr = factory_pos
 
@@ -144,6 +156,8 @@ def agent(obs, config):
 
         if rtype == 0:
             actions[uid] = factory_action(uid, col, row, energy, jump_cd, build_cd, scout_count, worker_count, obs, config)
+        elif rtype == 2:
+            actions[uid] = worker_action(col, row, energy, obs, config)
         elif rtype == 1 and f_data is not None:
             factory_pos = (f_data[1], f_data[2])
             actions[uid] = scout_action(uid, col, row, energy, factory_pos, obs, config)
