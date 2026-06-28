@@ -1,12 +1,13 @@
 """Run demo_agent vs random N times and report win rate."""
 import sys
 import argparse
+from tqdm import tqdm
 from kaggle_environments import make
 from custom_agents.demo_agent import agent as demo_agent
 
 def run(n, seeds=None):
     wins = draws = losses = 0
-    for i in range(n):
+    for i in tqdm(range(n), unit="game"):
         seed = seeds[i] if seeds else i
         env = make("crawl", configuration={"randomSeed": seed})
         env.run([demo_agent, "random"])
